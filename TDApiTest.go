@@ -2,7 +2,7 @@ package TDApiTest
 
 import (
 	"fmt"
-	"github.com/pecheriere/jamjitsu-backend/Godeps/_workspace/src/github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -50,11 +50,11 @@ func NewTDApiTest(router AbstractRouter, logger Logger) *TDApiTest {
 	return &TDApiTest{router: router, logger: logger}
 }
 
-func (td *TDApiTest) beforeEach() {
+func (td *TDApiTest) BeforeEach() {
 	td.RespRec = httptest.NewRecorder()
 }
 
-func (td *TDApiTest) runTests(t *testing.T) {
+func (td *TDApiTest) RunTests(t *testing.T) {
 	for _, route := range td.TestContainers {
 		for _, testToRun := range route.TestsToRun {
 			req := &http.Request{
