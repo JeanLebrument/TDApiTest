@@ -64,8 +64,6 @@ func TestGetRoutes(t *testing.T) {
 
 	assert.NotNil(t, td)
 
-	td.BeforeEach()
-
 	td.TestContainers = TDApiTest.TestContainers{
 		{
 			Method: GET,
