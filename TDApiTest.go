@@ -2,7 +2,7 @@ package TDApiTest
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

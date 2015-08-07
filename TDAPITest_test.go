@@ -3,10 +3,10 @@ package TDApiTest_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"github.com/jeanlebrument/TDApiTest"
-	"github.com/stretchr/testify/assert"
-	"github.com/unrolled/render"
+	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/gorilla/mux"
+	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/stretchr/testify/assert"
+	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/unrolled/render"
 	"net/http"
 	"net/url"
 	"testing"
