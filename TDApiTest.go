@@ -50,11 +50,13 @@ func NewTDApiTest(router AbstractRouter, logger Logger) *TDApiTest {
 	return &TDApiTest{router: router, logger: logger}
 }
 
-func (td *TDApiTest) BeforeEach() {
+func (td *TDApiTest) beforeEach() {
 	td.RespRec = httptest.NewRecorder()
 }
 
 func (td *TDApiTest) RunTests(t *testing.T) {
+	td.beforeEach()
+
 	for _, route := range td.TestContainers {
 		for _, testToRun := range route.TestsToRun {
 			req, err := http.NewRequest(route.Method, route.Path,
