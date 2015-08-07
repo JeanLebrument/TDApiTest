@@ -1,7 +1,6 @@
 package TDApiTest
 
 import (
-	"fmt"
 	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -35,13 +34,8 @@ type AbstractRouter interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
-type Logger interface {
-	Log(message string) error
-}
-
 type TDApiTest struct {
 	router         AbstractRouter
-	logger         Logger
 	RespRec        *httptest.ResponseRecorder
 	TestContainers TestContainers
 }
@@ -50,8 +44,8 @@ func init() {
 	var _ assert.Assertions // Tricks for Godep to import packages needed by tests.
 }
 
-func NewTDApiTest(router AbstractRouter, logger Logger) *TDApiTest {
-	return &TDApiTest{router: router, logger: logger}
+func NewTDApiTest(router AbstractRouter) *TDApiTest {
+	return &TDApiTest{router: router}
 }
 
 func (td *TDApiTest) beforeEach() {
@@ -59,8 +53,6 @@ func (td *TDApiTest) beforeEach() {
 }
 
 func (td *TDApiTest) RunTests(t *testing.T) {
-	td.beforeEach()
-
 	for _, route := range td.TestContainers {
 		for _, testToRun := range route.TestsToRun {
 			req, err := http.NewRequest(route.Method, route.Path,
@@ -72,13 +64,16 @@ func (td *TDApiTest) RunTests(t *testing.T) {
 				req.Header.Set(k, v)
 			}
 
+			td.beforeEach()
 			td.router.ServeHTTP(td.RespRec, req)
-			assert.Equal(t, td.RespRec.Code, testToRun.Status)
+			t.Logf("Executing test: %s, function called: %s", testToRun.Desc,
+				runtime.FuncForPC(reflect.ValueOf(testToRun.TestFunc).Pointer()).Name())
+			assert.Equal(t, testToRun.Status, td.RespRec.Code)
 			content, err := ioutil.ReadAll(td.RespRec.Body)
 			assert.Nil(t, err)
-			td.logger.Log(fmt.Sprintf("Executing test: %s, function called: %s", testToRun.Desc,
-				runtime.FuncForPC(reflect.ValueOf(testToRun.TestFunc).Pointer()).Name()))
-			testToRun.TestFunc(t, strings.TrimSpace(string(content)))
+			if testToRun.TestFunc != nil {
+				testToRun.TestFunc(t, strings.TrimSpace(string(content)))
+			}
 		}
 	}
 }

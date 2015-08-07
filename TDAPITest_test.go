@@ -2,7 +2,6 @@ package TDApiTest_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/jeanlebrument/TDApiTest"
 	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/gorilla/mux"
 	"github.com/jeanlebrument/TDApiTest/Godeps/_workspace/src/github.com/stretchr/testify/assert"
@@ -18,25 +17,12 @@ const (
 	urlKey    = "keys"
 )
 
-var headerValueArr = []string{"Content-Type", "application/json"}
-var headerValueMap = map[string]string{"Content-Type": "application/json"}
+var headerValueArr = []string{"Content-Type", "application/test.1.0+json"}
+var headerValueMap = map[string]string{"Content-Type": "application/test.1.0+json"}
 var urlValues = []string{"Happy", "Coding"}
 var requestResponse = map[string]string{"Hello": "World"}
 
-type LoggerTest struct{}
-
-func NewLoggerTest() *LoggerTest {
-	return &LoggerTest{}
-}
-
-func (l LoggerTest) Log(message string) error {
-	fmt.Printf("%s\n", message)
-
-	return nil
-}
-
 func Hello(w http.ResponseWriter, r *http.Request) {
-	NewLoggerTest().Log(fmt.Sprintf("%s\n", r.FormValue(urlKey)))
 	render.New().JSON(w, http.StatusOK, requestResponse)
 }
 
@@ -60,7 +46,7 @@ func checkHelloRoute(t *testing.T, result string) {
 }
 
 func TestGetRoutes(t *testing.T) {
-	td := TDApiTest.NewTDApiTest(newRouter(), NewLoggerTest())
+	td := TDApiTest.NewTDApiTest(newRouter())
 
 	assert.NotNil(t, td)
 
@@ -70,11 +56,21 @@ func TestGetRoutes(t *testing.T) {
 			Path:   PathHello,
 			TestsToRun: TDApiTest.TestsToRun{
 				{
-					Desc:     "Hello",
+					Desc:     "Hello route",
 					Status:   http.StatusOK,
 					Header:   headerValueMap,
 					Params:   url.Values{urlKey: urlValues},
 					TestFunc: checkHelloRoute,
+				},
+				{
+					Desc:   "Hello route without test func",
+					Status: http.StatusOK,
+					Params: url.Values{urlKey: urlValues},
+					Header: headerValueMap,
+				},
+				{
+					Desc:   "Hello route without header",
+					Status: http.StatusNotFound,
 				},
 			},
 		},
