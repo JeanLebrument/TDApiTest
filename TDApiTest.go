@@ -15,7 +15,7 @@ import (
 
 type TestToRun struct {
 	Desc     string
-	Header   string
+	Header   map[string]string
 	Params   url.Values
 	Status   int
 	TestFunc func(*testing.T, string)
@@ -57,16 +57,20 @@ func (td *TDApiTest) BeforeEach() {
 func (td *TDApiTest) RunTests(t *testing.T) {
 	for _, route := range td.TestContainers {
 		for _, testToRun := range route.TestsToRun {
-			req := &http.Request{
-				Method: route.Method,
-				URL:    &url.URL{Path: route.Path},
-				Form:   testToRun.Params}
+			req, err := http.NewRequest(route.Method, route.Path,
+				strings.NewReader(testToRun.Params.Encode()))
+
+			assert.Nil(t, err)
+
+			for k, v := range testToRun.Header {
+				req.Header.Set(k, v)
+			}
 
 			td.router.ServeHTTP(td.RespRec, req)
 			assert.Equal(t, td.RespRec.Code, testToRun.Status)
 			content, err := ioutil.ReadAll(td.RespRec.Body)
 			assert.Nil(t, err)
-			td.logger.Log(fmt.Sprintf("Executing function: #%s",
+			td.logger.Log(fmt.Sprintf("Executing test: %s, function called: %s", testToRun.Desc,
 				runtime.FuncForPC(reflect.ValueOf(testToRun.TestFunc).Pointer()).Name()))
 			testToRun.TestFunc(t, strings.TrimSpace(string(content)))
 		}

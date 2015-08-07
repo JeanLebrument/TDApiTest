@@ -6,9 +6,22 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jeanlebrument/TDApiTest"
 	"github.com/stretchr/testify/assert"
+	"github.com/unrolled/render"
 	"net/http"
+	"net/url"
 	"testing"
 )
+
+const (
+	GET       = "GET"
+	PathHello = "/hello"
+	urlKey    = "keys"
+)
+
+var headerValueArr = []string{"Content-Type", "application/json"}
+var headerValueMap = map[string]string{"Content-Type": "application/json"}
+var urlValues = []string{"Happy", "Coding"}
+var requestResponse = map[string]string{"Hello": "World"}
 
 type LoggerTest struct{}
 
@@ -22,54 +35,32 @@ func (l LoggerTest) Log(message string) error {
 	return nil
 }
 
-func SetContentTypeJson(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func Hello(w http.ResponseWriter, r *http.Request) {
+	NewLoggerTest().Log(fmt.Sprintf("%s\n", r.FormValue(urlKey)))
+	render.New().JSON(w, http.StatusOK, requestResponse)
 }
 
-func SetHeaderOk(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusOK)
-}
-
-type HelloStruct struct {
-	Str1 string `json:"str1"`
-	Str2 string `json:"str2"`
-}
-
-func Hello(res http.ResponseWriter, req *http.Request) {
-	SetContentTypeJson(res)
-	SetHeaderOk(res)
-
-	if err := json.NewEncoder(res).Encode(HelloStruct{
-		Str1: "Hello",
-		Str2: "World",
-	}); err != nil {
-		panic(err)
-	}
-}
-
-func NewRouter() *mux.Router {
+func newRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
-	router.Methods("GET").
-		Path("/hello").
+	router.Methods(GET).
+		Path(PathHello).
 		Name("Hello").
+		Headers(headerValueArr...).
 		Handler(http.HandlerFunc(Hello))
 
 	return router
 }
 
 func checkHelloRoute(t *testing.T, result string) {
-	expected, err := json.Marshal(HelloStruct{
-		Str1: "Hello",
-		Str2: "World",
-	})
+	expected, err := json.Marshal(requestResponse)
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, string(expected))
 }
 
 func TestGetRoutes(t *testing.T) {
-	td := TDApiTest.NewTDApiTest(NewRouter(), NewLoggerTest())
+	td := TDApiTest.NewTDApiTest(newRouter(), NewLoggerTest())
 
 	assert.NotNil(t, td)
 
@@ -77,12 +68,14 @@ func TestGetRoutes(t *testing.T) {
 
 	td.TestContainers = TDApiTest.TestContainers{
 		{
-			Method: "GET",
-			Path:   "/hello",
+			Method: GET,
+			Path:   PathHello,
 			TestsToRun: TDApiTest.TestsToRun{
 				{
 					Desc:     "Hello",
 					Status:   http.StatusOK,
+					Header:   headerValueMap,
+					Params:   url.Values{urlKey: urlValues},
 					TestFunc: checkHelloRoute,
 				},
 			},
