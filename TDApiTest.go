@@ -46,6 +46,10 @@ type TDApiTest struct {
 	TestContainers TestContainers
 }
 
+func init() {
+	var _ assert.Assertions // Tricks for Godep to import packages needed by tests.
+}
+
 func NewTDApiTest(router AbstractRouter, logger Logger) *TDApiTest {
 	return &TDApiTest{router: router, logger: logger}
 }
