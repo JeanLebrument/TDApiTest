@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/jeanlebrument/TDApiTest",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/gorilla/context",
