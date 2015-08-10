@@ -14,39 +14,48 @@ import (
 const (
 	GET       = "GET"
 	PathHello = "/hello"
-	urlKey    = "keys"
 )
 
-var headerValueArr = []string{"Content-Type", "application/test.1.0+json"}
-var headerValueMap = map[string]string{"Content-Type": "application/test.1.0+json"}
-var urlValues = []string{"Happy", "Coding"}
-var requestResponse = map[string]string{"Hello": "World"}
+var headerValueArr = []string{"Content-Type", "application/x-www-form-urlencoded; param=value"}
+var headerValueMap = map[string]string{"Content-Type": "application/x-www-form-urlencoded; param=value"}
+var urlParams = url.Values{"key": {"Happy", "Coding"}}
 
-func Hello(w http.ResponseWriter, r *http.Request) {
-	render.New().JSON(w, http.StatusOK, requestResponse)
+type UT struct {
+	t *testing.T
 }
 
-func newRouter() *mux.Router {
+func newUT(t *testing.T) *UT {
+	return &UT{t: t}
+}
+
+func (ut *UT) Hello(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	assert.Nil(ut.t, err)
+
+	render.New().JSON(w, http.StatusOK, r.Form)
+}
+
+func newRouter(t *testing.T) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.Methods(GET).
 		Path(PathHello).
 		Name("Hello").
 		Headers(headerValueArr...).
-		Handler(http.HandlerFunc(Hello))
+		Handler(http.HandlerFunc(newUT(t).Hello))
 
 	return router
 }
 
 func checkHelloRoute(t *testing.T, result string) {
-	expected, err := json.Marshal(requestResponse)
+	expected, err := json.Marshal(urlParams)
 
 	assert.Nil(t, err)
 	assert.Equal(t, result, string(expected))
 }
 
 func TestGetRoutes(t *testing.T) {
-	td := TDApiTest.NewTDApiTest(newRouter())
+	td := TDApiTest.NewTDApiTest(newRouter(t))
 
 	assert.NotNil(t, td)
 
@@ -59,13 +68,13 @@ func TestGetRoutes(t *testing.T) {
 					Desc:     "Hello route",
 					Status:   http.StatusOK,
 					Header:   headerValueMap,
-					Params:   url.Values{urlKey: urlValues},
+					Params:   urlParams,
 					TestFunc: checkHelloRoute,
 				},
 				{
 					Desc:   "Hello route without test func",
 					Status: http.StatusOK,
-					Params: url.Values{urlKey: urlValues},
+					Params: urlParams,
 					Header: headerValueMap,
 				},
 				{
