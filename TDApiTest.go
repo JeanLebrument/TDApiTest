@@ -56,8 +56,9 @@ func (td *TDApiTest) RunTests(t *testing.T) {
 	for _, route := range td.TestContainers {
 		for _, testToRun := range route.TestsToRun {
 			req, err := http.NewRequest(route.Method, route.Path, nil)
-			assert.Nil(t, err)
+			funcName := runtime.FuncForPC(reflect.ValueOf(testToRun.TestFunc).Pointer()).Name()
 
+			assert.Nil(t, err)
 			req.Form = testToRun.Params
 
 			for k, v := range testToRun.Header {
@@ -65,8 +66,13 @@ func (td *TDApiTest) RunTests(t *testing.T) {
 			}
 
 			td.beforeEach()
-			t.Logf("Executing test: %s, function called: %s", testToRun.Desc,
-				runtime.FuncForPC(reflect.ValueOf(testToRun.TestFunc).Pointer()).Name())
+
+			if funcName != "" {
+				t.Logf("Executing test: %s, function called: %s", testToRun.Desc, funcName)
+			} else {
+				t.Logf("Executing test: %s", testToRun.Desc)
+			}
+
 			td.router.ServeHTTP(td.RespRec, req)
 			assert.Equal(t, testToRun.Status, td.RespRec.Code)
 			content, err := ioutil.ReadAll(td.RespRec.Body)
